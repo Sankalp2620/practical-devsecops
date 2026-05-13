@@ -3,33 +3,27 @@
   become: yes
   tasks:
     - name: Install dependencies
-      apt:
+      dnf:
         name: "{{ item }}"
         state: present
       loop:
-        - apt-transport-https
-        - ca-certificates
-        - curl
-        - gnupg
-        - lsb-release
-        
-    - name: Add docker GPG key
-      apt_key:
-        url: https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-        state: present
-    
-    - name: Add docker repository
-      apt:
-        name:"{{ item  }}"
+        - dnf-plugins-core
+        - yum-utils
+
+    - name: Add docker repo
+      command: dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+
+    - name: Install docker
+      dnf:
+        name: "{{ item  }}"
         state: present
       loop:
         - docker-ce
         - docker-ce-cli
         - containerd.io
-      update_cache: yes
 
-    - name: Enable and start docker service
-      systemd:
-        name: docker
-        enabled: yes
-        state: started
+    - name: Add ec2-user to docker group
+      user:
+        name: ec2-user
+        groups: docker
+        append: yes
