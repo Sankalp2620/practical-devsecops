@@ -32,3 +32,19 @@ resource "aws_security_group" "docker_sg" {
         cidr_blocks = ["0.0.0.0/0"]
     }
 }
+
+resource "aws_key_pair" "eks" {
+  key_name   = "eks"
+  public_key = file("eks.pub")
+}
+
+resource "local_file" "ansible_inventory" {
+  content = templatefile("${path.module}/inventory.tpl", {
+    node_ips = {
+      for k, v in aws_instance.nodes :
+      k => v.public_ip
+    }
+  })
+
+  filename = "${path.module}/../ansible/inventory.ini"
+}
